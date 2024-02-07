@@ -1,0 +1,47 @@
+{
+    "name": "blessingudor/woo-quantity-to-price",
+    "description": "Woo Quantity To Price",
+    "type": "wordpress-plugin",
+    "require": {
+        "yoast/phpunit-polyfills": "^1.0",
+        "php": ">=7.2",
+        "sirbrillig/phpcs-changed": "^2.11.1",
+        "composer/installers": "^1.7.0"
+    },
+    "require-dev": {
+        "wp-coding-standards/wpcs": "^3.0"
+    },
+    "license": "GPL-2.0+",
+    "autoload": {
+        "psr-4": {
+            "WQP\\WooQuantityToPrice\\": "includes/classes"
+        }
+    },
+    "authors": [
+        {
+            "name": "Blessing",
+            "email": "berachah54@gmail.com"
+        }
+    ],
+    "config": {
+        "platform": {
+            "php": "7.4"
+        },
+        "allow-plugins": {
+            "composer/installers": false,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "scripts": {
+        "make-pot": [
+            "wp i18n make-pot . languages/git-updater.pot"
+        ],
+        "wpcs": [
+            "vendor/bin/phpcbf .; vendor/bin/phpcs ."
+        ],
+        "lint:php": "vendor/bin/phpcbf --report-file=PHPCS-report.txt --standard=WordPress **/*.php",
+        "test-unit": "./vendor/bin/phpunit",
+        "lint": "chg=$(git diff --relative --name-only -- '*.php'); [[ -z $chg ]] || ./vendor/bin/phpcs-changed -s --git --git-unstaged $chg",
+        "link:check": "vendor/bin/phpcs --standard=WordPress ."
+    }
+}

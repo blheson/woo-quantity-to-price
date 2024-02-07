@@ -1,0 +1,55 @@
+name: PHP Coding Standards - PR Changed Files
+
+on:
+  pull_request:
+    paths:
+      - "**.php"
+      - .github/workflows/php-cs-check.yml
+    paths-ignore:
+      - 'vendor/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        php: [7.4, 8.3]
+    name: Code sniff (PHP ${{ matrix.php }}, WP Latest)
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          coverage: none
+          extensions: mysql, mysqli
+          tools: composer, wp-cli, phpunit-polyfills:1.0
+        env:
+          COMPOSER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Changed Files
+        id: changed-files
+        uses: tj-actions/changed-files@v39
+        with:
+          files: "includes/**.php"
+
+      - name: Tool versions
+        run: |
+          php --version
+          composer --version
+          vendor/bin/phpcs-changed --version
+
+      - name: Run PHPCS
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: vendor/bin/phpcs-changed --warning-severity=0 -s --git --git-base ${{ github.event.pull_request.base.sha }} ${{ steps.changed-files.outputs.all_changed_files }}
