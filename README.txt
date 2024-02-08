@@ -1,2 +1,2 @@
 === Woo Quantity To Price ===
-Auto sync Plugins and Themes from repositories
+Woo Quantity To Price from repositories

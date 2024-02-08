@@ -61,6 +61,8 @@ class Woo_Quantity_To_Price {
 	public function init() {
 		add_action( 'admin_menu', [ $this, 'add_admin_wqp_menu' ] );
 		add_filter( 'plugin_action_links_' . $this->plugin_file, [ $this, 'add_settings_link' ] );
+
+		add_action( 'woocommerce_before_calculate_totals', [ $this, 'wqp_modify_cart' ] );
 	}
 
 	/**
@@ -101,5 +103,28 @@ class Woo_Quantity_To_Price {
 		$settings_link = '<a href="admin.php?page=wqp_settings_page">Settings</a>';
 		array_push( $links, $settings_link );
 		return $links;
+	}
+
+	/**
+	 * Modify the cart based on quantity.
+	 */
+	public function wqp_modify_cart() {
+		global $woocommerce;
+		$cart = $woocommerce->cart->get_cart();
+
+		foreach ( $cart as $cart_item_key => $cart_item ) {
+			$product_id = $cart_item['product_id'];
+			$quantity   = $cart_item['quantity'];
+
+			$product = wc_get_product( $product_id );
+			$price   = $product->get_price();
+
+			if ( $quantity > 5 ) {
+				$newprice = $price * 0.9;
+				$cart_item['data']->set_price( $newprice );
+			} else {
+				$cart_item['data']->set_price( $price );
+			}
+		}
 	}
 }
