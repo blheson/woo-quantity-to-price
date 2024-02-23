@@ -137,11 +137,9 @@ class Woo_Quantity_To_Price {
 	 * @return array The validated and sanitized input array.
 	 */
 	public function wqp_settings_options_validate( $input ) {
-		// die(var_dump($input));
 
 		$newinput['value'] = trim( $input['value'] );
 		$newinput['type']  = trim( $input['type'] );
-		// die(var_dump($newinput));
 
 		if ( empty( $newinput['value'] ) ) {
 			$options           = get_option( 'wqp_settings_options' );
@@ -164,7 +162,7 @@ class Woo_Quantity_To_Price {
 	 * @return void
 	 */
 	public function wqp_settings_section_text() {
-		// echo 'Set your price configuration';
+		echo 'Set your price configuration';
 	}
 
 	/**
@@ -186,14 +184,15 @@ class Woo_Quantity_To_Price {
 	 */
 	public function wqp_settings_type() {
 		$options = get_option( 'wqp_settings_options', $this->defaultSettingsOptions );
-		$select_percent = $options['type'] === 'percent' ? 'selected' : '';
-		$select_fixed = $options['type']   === 'fixed' ? 'selected' : '';
-		// die(var_dump($options));
+
+		$select_percent = 'percent' === $options['type'] ? 'selected' : '';
+		$select_fixed   = 'fixed' === $options['type'] ? 'selected' : '';
+
 		echo '
 			<select id="wqp_settings_type" name="wqp_settings_options[type]" value="' . esc_attr( $options['type'] ) . '">
 				<option value="">Select a type</option>
-				<option value="percent"'. $select_percent .'>Percent</option>
-				<option value="fixed"'. $select_fixed .'>Fixed</option>
+				<option value="percent"' . esc_attr( $select_percent ) . '>Percent</option>
+				<option value="fixed"' . esc_attr( $select_fixed ) . '>Fixed</option>
 			</select>
         ';
 	}
@@ -218,7 +217,7 @@ class Woo_Quantity_To_Price {
 				} elseif ( '' !== $this->wqp_settings['value'] && 'fixed' === $this->wqp_settings['type'] ) {
 					$newprice = $price - $this->wqp_settings['value'];
 
-					if ($newprice < 0 ) {
+					if ( $newprice < 0 ) {
 						$newprice = 1;
 					}
 
@@ -226,7 +225,7 @@ class Woo_Quantity_To_Price {
 				} elseif ( '' !== $this->wqp_settings['value'] && 'percent' === $this->wqp_settings['type'] ) {
 					$newprice = $price * ( ( 100 - (int) $this->wqp_settings['value'] ) / 100 );
 
-					if ($newprice < 0 ) {
+					if ( $newprice < 0 ) {
 						$newprice = 1;
 					}
 
