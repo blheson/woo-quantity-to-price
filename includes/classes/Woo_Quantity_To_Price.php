@@ -40,6 +40,23 @@ class Woo_Quantity_To_Price {
 	protected $plugin_file;
 
 	/**
+	 * The price configuration settings options
+	 *
+	 * @var array
+	 */
+	public array $wqp_settings;
+
+	/**
+	 * The default price configuration settings options
+	 *
+	 * @var array
+	 */
+	public array $defaultSettingsOptions = [
+		'value' => '',
+		'type'  => '',
+	];
+
+	/**
 	 * Constructs a new instance of the class.
 	 *
 	 * Initializes the plugin directory path and assigns the plugin name and file path.
@@ -49,6 +66,8 @@ class Woo_Quantity_To_Price {
 		$this->plugin     = wp_basename( $this->plugin_dir );
 
 		$this->plugin_file = $this->plugin . '/woo-quantity-to-price.php';
+
+		$this->wqp_settings = get_option( 'wqp_settings_options', $this->defaultSettingsOptions );
 	}
 
 	/**
@@ -62,6 +81,8 @@ class Woo_Quantity_To_Price {
 		add_action( 'admin_menu', [ $this, 'add_admin_wqp_menu' ] );
 		add_filter( 'plugin_action_links_' . $this->plugin_file, [ $this, 'add_settings_link' ] );
 
+		add_action( 'admin_init', [ $this, 'add_wqp_settings' ] );
+
 		add_action( 'woocommerce_before_calculate_totals', [ $this, 'wqp_modify_cart' ] );
 	}
 
@@ -71,21 +92,11 @@ class Woo_Quantity_To_Price {
 	 * @return void
 	 */
 	public function add_admin_wqp_menu() {
-		add_menu_page( 'Woo Quantity To Price', 'Woo Quantity To Price', 'manage_options', 'wqp_index_page', [ $this, 'wqp_index_page_view' ], '', 110 );
-		add_submenu_page( 'wqp_index_page', 'Settings', 'Settings', 'manage_options', 'wqp_settings_page', [ $this, 'wqp_settings_page_view' ] );
+		add_submenu_page( 'woocommerce', 'Price configuration', 'Price configuration', 'manage_woocommerce', 'wqp_settings_page', [ $this, 'wqp_settings_page_view' ] );
 	}
 
 	/**
-	 * Admin index page for the Woo Quantity To Price plugin.
-	 *
-	 * @return void
-	 */
-	public function wqp_index_page_view() {
-		require_once $this->plugin_dir . 'views/index.php';
-	}
-
-	/**
-	 * Admin settings page for the Woo Quantity To Price plugin.
+	 * Admin price configuration settings page for the Woo Quantity To Price plugin.
 	 *
 	 * @return void
 	 */
@@ -106,6 +117,88 @@ class Woo_Quantity_To_Price {
 	}
 
 	/**
+	 * Settings page for price configuration settings page for the Woo Quantity To Price plugin.
+	 *
+	 * @return void
+	 */
+	public function add_wqp_settings() {
+		register_setting( 'wqp_settings_options', 'wqp_settings_options', [ 'sanitize_callback' => [ $this, 'wqp_settings_options_validate' ] ] );
+
+		add_settings_section( 'wqp_settings_section', 'Price Configuration', [ $this, 'wqp_settings_section_text' ], 'wqp_settings_page' );
+
+		add_settings_field( 'value', 'Value', [ $this, 'wqp_settings_value' ], 'wqp_settings_page', 'wqp_settings_section' );
+		add_settings_field( 'type', 'Type', [ $this, 'wqp_settings_type' ], 'wqp_settings_page', 'wqp_settings_section' );
+	}
+
+	/**
+	 * Validates and sanitizes the input for the wqp_settings_options function.
+	 *
+	 * @param array $input The input array containing the options to be validated.
+	 * @return array The validated and sanitized input array.
+	 */
+	public function wqp_settings_options_validate( $input ) {
+		// die(var_dump($input));
+
+		$newinput['value'] = trim( $input['value'] );
+		$newinput['type']  = trim( $input['type'] );
+		// die(var_dump($newinput));
+
+		if ( empty( $newinput['value'] ) ) {
+			$options           = get_option( 'wqp_settings_options' );
+			$newinput['value'] = $options['value'] ?? '';
+			add_settings_error( 'wqp_settings_options', 'wqp_error', 'value can not be empty.' );
+		}
+
+		if ( '' === $newinput['type'] ) {
+			$options          = get_option( 'wqp_settings_options' );
+			$newinput['type'] = $options['type'] ?? '';
+			add_settings_error( 'wqp_settings_options', 'wqp_error', 'Please select a type.' );
+		}
+
+		return $newinput;
+	}
+
+	/**
+	 * Settings section text.
+	 *
+	 * @return void
+	 */
+	public function wqp_settings_section_text() {
+		// echo 'Set your price configuration';
+	}
+
+	/**
+	 * Function to write html input for price value in the settings options.
+	 *
+	 * @return void
+	 */
+	public function wqp_settings_value() {
+		$options = get_option( 'wqp_settings_options', $this->defaultSettingsOptions );
+		echo '
+            <input type="number" id="wqp_settings_value" name="wqp_settings_options[value]" value="' . esc_attr( $options['value'] ) . '" />
+        ';
+	}
+
+	/**
+	 * Function to write html input for price type in the settings options.
+	 *
+	 * @return void
+	 */
+	public function wqp_settings_type() {
+		$options = get_option( 'wqp_settings_options', $this->defaultSettingsOptions );
+		$select_percent = $options['type'] === 'percent' ? 'selected' : '';
+		$select_fixed = $options['type']   === 'fixed' ? 'selected' : '';
+		// die(var_dump($options));
+		echo '
+			<select id="wqp_settings_type" name="wqp_settings_options[type]" value="' . esc_attr( $options['type'] ) . '">
+				<option value="">Select a type</option>
+				<option value="percent"'. $select_percent .'>Percent</option>
+				<option value="fixed"'. $select_fixed .'>Fixed</option>
+			</select>
+        ';
+	}
+
+	/**
 	 * Modify the cart based on quantity.
 	 */
 	public function wqp_modify_cart() {
@@ -120,8 +213,25 @@ class Woo_Quantity_To_Price {
 			$price   = $product->get_price();
 
 			if ( $quantity > 5 ) {
-				$newprice = $price * 0.9;
-				$cart_item['data']->set_price( $newprice );
+				if ( '' === $this->wqp_settings['value'] && '' === $this->wqp_settings['type'] ) {
+					$cart_item['data']->set_price( $price );
+				} elseif ( '' !== $this->wqp_settings['value'] && 'fixed' === $this->wqp_settings['type'] ) {
+					$newprice = $price - $this->wqp_settings['value'];
+
+					if ($newprice < 0 ) {
+						$newprice = 1;
+					}
+
+					$cart_item['data']->set_price( $newprice );
+				} elseif ( '' !== $this->wqp_settings['value'] && 'percent' === $this->wqp_settings['type'] ) {
+					$newprice = $price * ( ( 100 - (int) $this->wqp_settings['value'] ) / 100 );
+
+					if ($newprice < 0 ) {
+						$newprice = 1;
+					}
+
+					$cart_item['data']->set_price( $newprice );
+				}
 			} else {
 				$cart_item['data']->set_price( $price );
 			}

@@ -11,5 +11,10 @@
 // If uninstall not called from WordPress die immediately.
 defined( 'WP_UNINSTALL_PLUGIN' ) || die( 'Gerrarahae' );
 
+// Remove Option.
+delete_option( 'wqp_settings_options' );
+// Site options in Multisite.
+delete_site_option( 'wqp_settings_options' );
+
 // Clear any cached data that has been removed.
 wp_cache_flush();
